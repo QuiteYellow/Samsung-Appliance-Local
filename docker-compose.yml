@@ -1,0 +1,36 @@
+services:
+  samsung-dryer-bridge:
+    build: .
+    container_name: samsung-dryer-bridge
+    restart: unless-stopped
+
+    # Bridge is outbound-only (TLS to dryer 49154, MQTT to broker 1883).
+    # No ports to expose.
+
+    volumes:
+      # Holds the mega client cert + key (mega_chain.pem and mega.key).
+      # Drop the files into ./certs alongside this compose file;
+      # gitignored, never published.
+      - ./certs:/config:ro
+
+    environment:
+      # Dryer
+      - APPLIANCE_IP=${APPLIANCE_IP}
+      - APPLIANCE_OCF_PORT=${APPLIANCE_OCF_PORT:-49154}
+      - CERT_PATH=/config/mega_chain.pem
+      - KEY_PATH=/config/mega.key
+
+      # MQTT broker (typically HA's Mosquitto add-on)
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_USER=${MQTT_USER}
+      - MQTT_PASS=${MQTT_PASS}
+      - MQTT_TOPIC_PREFIX=${MQTT_TOPIC_PREFIX:-samsung_dryer}
+      - HA_DISCOVERY_PREFIX=${HA_DISCOVERY_PREFIX:-homeassistant}
+      - DEVICE_NAME=${DEVICE_NAME:-Samsung Dryer}
+
+      # Timers
+      - HEALTH_INTERVAL_S=${HEALTH_INTERVAL_S:-60}
+      - HEARTBEAT_INTERVAL_S=${HEARTBEAT_INTERVAL_S:-600}
+
+      - TZ=${TZ:-Europe/London}
